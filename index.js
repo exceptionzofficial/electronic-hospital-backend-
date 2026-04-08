@@ -4,7 +4,7 @@ const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const { Pool } = require('pg');
 const cloudinary = require('cloudinary').v2;
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(cors({
@@ -24,6 +24,7 @@ cloudinary.config({
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
 async function initDB() {
@@ -69,6 +70,11 @@ async function initDB() {
   }
 }
 initDB();
+
+// ─── Health check ───
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Electronic Hospital API is running' });
+});
 
 // ─── Helper: Upload to Cloudinary ───
 async function uploadToCloudinary(file, folder) {
