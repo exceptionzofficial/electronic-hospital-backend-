@@ -64,6 +64,8 @@ async function initDB() {
     try { await pool.query('ALTER TABLE Users ADD COLUMN IF NOT EXISTS address TEXT'); } catch(e){}
     try { await pool.query('ALTER TABLE Users ADD COLUMN IF NOT EXISTS profilePhotoUrl TEXT'); } catch(e){}
     try { await pool.query('ALTER TABLE RepairRequests ADD COLUMN IF NOT EXISTS adminMessage TEXT'); } catch(e){}
+    try { await pool.query('ALTER TABLE RepairRequests ADD COLUMN IF NOT EXISTS estimatedPrice DECIMAL DEFAULT 0'); } catch(e){}
+    try { await pool.query("ALTER TABLE RepairRequests ADD COLUMN IF NOT EXISTS approvalStatus VARCHAR(255) DEFAULT 'None'"); } catch(e){}
 
     // Fix userId type mismatch if it exists
     try { 
@@ -198,15 +200,40 @@ app.get('/api/admin/requests', async (req, res) => {
 
 app.put('/api/admin/requests/:id', async (req, res) => {
   try {
-    const { status, adminMessage } = req.body;
-    
-    if (adminMessage) {
-      await pool.query('UPDATE RepairRequests SET status = $1, adminMessage = $2 WHERE id = $3', [status, adminMessage, req.params.id]);
-    } else {
-      await pool.query('UPDATE RepairRequests SET status = $1 WHERE id = $2', [status, req.params.id]);
+    const { status, adminMessage, estimatedPrice } = req.body;
+    let query = 'UPDATE RepairRequests SET status = $1';
+    let params = [status];
+
+    if (adminMessage !== undefined) {
+      params.push(adminMessage);
+      query += `, adminMessage = $${params.length}`;
     }
+    if (estimatedPrice !== undefined) {
+      params.push(estimatedPrice);
+      query += `, estimatedPrice = $${params.length}`;
+      // Automatically set approvalStatus to 'Pending' if a price is sent
+      query += `, approvalStatus = 'Pending'`;
+    }
+    
+    params.push(req.params.id);
+    query += ` WHERE id = $${params.length}`;
+    
+    await pool.query(query, params);
     res.json({ success: true });
   } catch (error) {
+    console.error("PUT /api/admin/requests/:id error:", error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// User response to estimation
+app.post('/api/requests/:id/respond', async (req, res) => {
+  try {
+    const { status } = req.body; // 'Approved' or 'Rejected'
+    await pool.query('UPDATE RepairRequests SET approvalStatus = $1 WHERE id = $2', [status, req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("POST /api/requests/:id/respond error:", error);
     res.status(500).json({ error: 'Server error' });
   }
 });
