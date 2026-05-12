@@ -8,7 +8,7 @@ const pool = new Pool({
 async function runSeed() {
   const dummyData = [
     {
-      userId: 'user_123',
+      userId: 3,
       customerName: 'Alice Smith',
       deviceType: 'Phone',
       brand: 'Apple',
@@ -18,17 +18,17 @@ async function runSeed() {
       status: 'Pending Assignment'
     },
     {
-      userId: 'user_124',
+      userId: 3,
       customerName: 'John Doe',
       deviceType: 'Laptop',
       brand: 'Dell',
       model: 'XPS 15',
       issue: 'Keyboard keys stick, and battery drains from 100% to 0 in 30 minutes.',
       photoUrl: 'https://res.cloudinary.com/dolgfnxht/image/upload/v1/sample.jpg',
-      status: 'In Progress'
+      status: 'Accepted'
     },
     {
-      userId: 'user_125',
+      userId: 3,
       customerName: 'Mary Higgins',
       deviceType: 'TV',
       brand: 'Samsung',
@@ -38,7 +38,7 @@ async function runSeed() {
       status: 'Completed'
     },
     {
-      userId: 'user_126',
+      userId: 3,
       customerName: 'David Lee',
       deviceType: 'PC',
       brand: 'Custom Build',

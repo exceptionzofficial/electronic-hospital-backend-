@@ -65,6 +65,13 @@ async function initDB() {
     try { await pool.query('ALTER TABLE Users ADD COLUMN IF NOT EXISTS profilePhotoUrl TEXT'); } catch(e){}
     try { await pool.query('ALTER TABLE RepairRequests ADD COLUMN IF NOT EXISTS adminMessage TEXT'); } catch(e){}
 
+    // Fix userId type mismatch if it exists
+    try { 
+      await pool.query('ALTER TABLE RepairRequests ALTER COLUMN userId TYPE INTEGER USING userId::integer'); 
+    } catch(e) {
+      console.log("RepairRequests.userId already INTEGER or table empty.");
+    }
+
     console.log("Connected to Neon DB and Verified Tables.");
   } catch (err) {
     console.error("Database connection error: ", err);
@@ -179,11 +186,12 @@ app.get('/api/admin/requests', async (req, res) => {
     const result = await pool.query(`
       SELECT r.*, u.phone as "customerPhone", u.address as "customerAddress" 
       FROM RepairRequests r 
-      LEFT JOIN Users u ON r.userId = u.id 
+      LEFT JOIN Users u ON r.userid = u.id 
       ORDER BY r.created_at DESC
     `);
     res.json(result.rows);
   } catch (error) {
+    console.error("GET /api/admin/requests error:", error);
     res.status(500).json({ error: 'Server error' });
   }
 });
